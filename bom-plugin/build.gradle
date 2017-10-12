@@ -1,0 +1,38 @@
+version = rootProject.version != 'unspecified' ? rootProject.version : bomPluginVersion
+
+sourceSets {
+    integTest {
+        groovy.srcDir file('src/integTest/groovy')
+        resources.srcDir file('src/integTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntime
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+task integTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDir = sourceSets.integTest.output.classesDir
+    classpath = sourceSets.integTest.runtimeClasspath
+    mustRunAfter test
+
+    reports {
+        html.destination = project.file("$html.destination/integration")
+        junitXml.destination = project.file("$junitXml.destination/integration")
+    }
+}
+
+//check.dependsOn integTest
+
+idea.module {
+    sourceSets.integTest.allSource.srcDirs.each {
+        testSourceDirs += it
+    }
+
+    scopes.TEST.plus += [configurations.integTestCompile]
+    scopes.TEST.plus += [configurations.integTestRuntime]
+}
+
+dependencies {
+    compile 'org.apache.maven.shared:maven-invoker:2.2'
+}
